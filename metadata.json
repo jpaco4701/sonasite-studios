@@ -1,0 +1,5 @@
+{
+  "name": "Sonasite AI Website Builder",
+  "description": "An all-in-one AI assistant that generates professional websites in 30 seconds, complete with CRM, invoicing, marketing, and analytics, ready for backend integration with Stripe and Supabase.",
+  "requestFramePermissions": []
+}
