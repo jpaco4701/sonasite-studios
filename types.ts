@@ -46,15 +46,16 @@ export interface WebsiteData {
 }
 
 export interface CrmContact {
-  id: number;
+  id?: number;
   name: string;
   email: string;
   status: 'Lead' | 'Contacted' | 'Customer' | 'Lost';
   lastContacted: string;
+  created_at?: string;
 }
 
 export interface Invoice {
-    id: string;
+    id?: string;
     customerName: string;
     customerEmail: string;
     items: {
@@ -65,4 +66,5 @@ export interface Invoice {
     total: number;
     issueDate: string;
     dueDate: string;
+    created_at?: string;
 }

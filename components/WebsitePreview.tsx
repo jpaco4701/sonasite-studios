@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { WebsiteData, WebsiteSection } from '../types';
 import { HeaderSection, HeroSection, AboutSection, ServicesSection, GallerySection, TestimonialsSection, ContactSection, FooterSection } from './SectionComponents';
 import { MagicWandIcon } from './icons';
@@ -59,11 +59,10 @@ const EditableSection: React.FC<{
 
 
 export const WebsitePreview: React.FC<WebsitePreviewProps> = ({ websiteData, onContentChange, selectedSectionId, setSelectedSectionId, isPanelOpen, onTogglePanel, onAddListItem, onDeleteListItem }) => {
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [imagePathToUpdate, setImagePathToUpdate] = useState<string | null>(null);
 
     useEffect(() => {
-        const existingStyle = document.getElementById('dynamic-theme-styles');
-        if (existingStyle) existingStyle.remove();
-
         const style = document.createElement('style');
         style.id = 'dynamic-theme-styles';
         style.innerHTML = `
@@ -71,30 +70,53 @@ export const WebsitePreview: React.FC<WebsitePreviewProps> = ({ websiteData, onC
                 --primary-color: ${websiteData.theme.primaryColor};
                 --secondary-color: ${websiteData.theme.secondaryColor};
                 --font-family: '${websiteData.theme.fontFamily}', sans-serif;
+                --primary-contrast-color: ${getContrastColor(websiteData.theme.primaryColor)};
             }
             html { scroll-behavior: smooth; }
             body, .font-sans { font-family: var(--font-family); }
             .bg-primary { background-color: var(--primary-color); }
             .border-primary { border-color: var(--primary-color); }
         `;
-        document.head.appendChild(style);
         
         const fontLink = document.createElement('link');
+        fontLink.id = 'dynamic-font-link';
         fontLink.href = `https://fonts.googleapis.com/css2?family=${websiteData.theme.fontFamily.replace(/ /g, '+')}:wght@400;700;900&display=swap`;
         fontLink.rel = 'stylesheet';
+
+        // Clean up previous tags before adding new ones
+        document.getElementById('dynamic-theme-styles')?.remove();
+        document.getElementById('dynamic-font-link')?.remove();
+
+        document.head.appendChild(style);
         document.head.appendChild(fontLink);
 
         return () => {
-            if(fontLink.parentNode) fontLink.parentNode.removeChild(fontLink);
+            // Cleanup on component unmount
+            style.remove();
+            fontLink.remove();
         };
 
-    }, [websiteData.theme]);
+    }, [websiteData.theme.primaryColor, websiteData.theme.secondaryColor, websiteData.theme.fontFamily]);
     
     const handleImageChange = (path: string) => {
-        const newUrl = prompt("Enter new image URL:", "https://images.pexels.com/...");
-        if (newUrl) {
-            onContentChange(path, newUrl);
+        setImagePathToUpdate(path);
+        fileInputRef.current?.click();
+    };
+    
+    const handleFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0] && imagePathToUpdate) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (loadEvent) => {
+                if(loadEvent.target?.result) {
+                    onContentChange(imagePathToUpdate, loadEvent.target.result as string);
+                }
+                setImagePathToUpdate(null);
+            };
+            reader.readAsDataURL(file);
         }
+        // Reset file input value to allow re-uploading the same file
+        event.target.value = '';
     };
 
     const primaryContrastColor = getContrastColor(websiteData.theme.primaryColor);
@@ -144,6 +166,13 @@ export const WebsitePreview: React.FC<WebsitePreviewProps> = ({ websiteData, onC
 
     return (
         <div className="relative animate-fade-in bg-white dark:bg-dark-900 w-full">
+            <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelected}
+                className="hidden"
+                accept="image/png, image/jpeg, image/gif, image/webp"
+            />
             {!isPanelOpen && (
                 <button
                     onClick={onTogglePanel}

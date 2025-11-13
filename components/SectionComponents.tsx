@@ -71,14 +71,14 @@ export const HeaderSection: React.FC<Omit<SectionProps, 'theme' | 'primaryContra
     </header>
 );
 
-export const HeroSection: React.FC<SectionProps> = ({ content, onContentChange, basePath, primaryContrastColor }) => (
+export const HeroSection: React.FC<SectionProps> = ({ content, onContentChange, basePath }) => (
     <div className="relative h-[60vh] md:h-[80vh] bg-cover bg-center text-white" style={{ backgroundImage: `url(${content.imageUrl || 'https://picsum.photos/1920/1080'})` }} id="hero">
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="text-center animate-slide-up">
                 <Editable as="h1" path={`${basePath}.title`} onContentChange={onContentChange} className="text-4xl md:text-6xl font-extrabold mb-4">{content.title}</Editable>
                 <Editable as="p" path={`${basePath}.subtitle`} onContentChange={onContentChange} className="text-lg md:text-xl max-w-2xl mx-auto">{content.subtitle}</Editable>
                  {content.ctaButton && (
-                    <a href={content.ctaButton.url} className="mt-8 inline-block px-8 py-3 font-bold rounded-full transition-transform transform hover:scale-105" style={{ backgroundColor: 'var(--primary-color)', color: primaryContrastColor }}>
+                    <a href={content.ctaButton.url} className="mt-8 inline-block px-8 py-3 font-bold rounded-full transition-transform transform hover:scale-105" style={{ backgroundColor: 'var(--primary-color)', color: 'var(--primary-contrast-color)' }}>
                         <Editable as="span" path={`${basePath}.ctaButton.text`} onContentChange={onContentChange}>
                            {content.ctaButton.text}
                         </Editable>
@@ -107,18 +107,29 @@ export const AboutSection: React.FC<SectionProps> = ({ section, content, onConte
     </Section>
 );
 
-export const ServicesSection: React.FC<SectionProps> = ({ section, content, onContentChange, basePath, safePrimaryTextColor, onAddListItem, onDeleteListItem }) => (
+export const ServicesSection: React.FC<SectionProps> = ({ section, content, onContentChange, basePath, safePrimaryTextColor, onAddListItem, onDeleteListItem, onImageChange }) => (
     <Section id={section.type} className="bg-gray-50 dark:bg-dark-800">
         <div className="container mx-auto px-4 text-center">
             <Editable as="h2" path={`${basePath}.title`} onContentChange={onContentChange} className="text-3xl font-bold mb-2 text-gray-800 dark:text-white">{content.title}</Editable>
             <Editable as="p" path={`${basePath}.subtitle`} onContentChange={onContentChange} className="text-lg text-gray-600 dark:text-gray-400 mb-12 max-w-2xl mx-auto">{content.subtitle}</Editable>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {content.items?.map((item, index) => (
-                    <div key={index} className="relative bg-white dark:bg-dark-700 p-8 rounded-lg shadow-lg text-left transform hover:-translate-y-2 transition-transform">
-                        <button onClick={() => onDeleteListItem(section.id, index)} className="absolute top-2 right-2 text-red-500 hover:text-red-700 text-2xl font-bold">&times;</button>
-                        <Editable as="h3" path={`${basePath}.items.${index}.title`} onContentChange={onContentChange} className="text-xl font-bold mb-2" style={{ color: safePrimaryTextColor }}>{item.title}</Editable>
-                        <Editable as="p" path={`${basePath}.items.${index}.description`} onContentChange={onContentChange} className="text-gray-600 dark:text-gray-300 mb-4">{item.description}</Editable>
-                        <Editable as="div" path={`${basePath}.items.${index}.price`} onContentChange={onContentChange} className="text-2xl font-bold text-gray-800 dark:text-white">{item.price}</Editable>
+                    <div key={index} className="relative bg-white dark:bg-dark-700 rounded-lg shadow-lg text-left transform hover:-translate-y-2 transition-transform overflow-hidden">
+                        <button onClick={() => onDeleteListItem(section.id, index)} className="absolute top-2 right-2 z-10 text-red-500 bg-white/70 rounded-full w-6 h-6 flex items-center justify-center hover:bg-white hover:text-red-700 text-lg font-bold">&times;</button>
+                        {item.imageUrl && (
+                            <EditableImage
+                                path={`${basePath}.items.${index}.imageUrl`}
+                                onImageChange={onImageChange}
+                                src={item.imageUrl}
+                                alt={item.title || 'Service Image'}
+                                className="w-full h-48 object-cover"
+                            />
+                        )}
+                        <div className="p-8">
+                            <Editable as="h3" path={`${basePath}.items.${index}.title`} onContentChange={onContentChange} className="text-xl font-bold mb-2" style={{ color: safePrimaryTextColor }}>{item.title}</Editable>
+                            <Editable as="p" path={`${basePath}.items.${index}.description`} onContentChange={onContentChange} className="text-gray-600 dark:text-gray-300 mb-4">{item.description}</Editable>
+                            <Editable as="div" path={`${basePath}.items.${index}.price`} onContentChange={onContentChange} className="text-2xl font-bold text-gray-800 dark:text-white">{item.price}</Editable>
+                        </div>
                     </div>
                 ))}
             </div>
@@ -160,33 +171,37 @@ export const TestimonialsSection: React.FC<SectionProps> = ({ section, content, 
     </Section>
 );
 
-export const ContactSection: React.FC<SectionProps> = ({ section, content, onContentChange, basePath, primaryContrastColor, safePrimaryTextColor, theme }) => {
-    const isPrimaryColorLight = (() => {
-        const hex = theme.primaryColor.substring(1);
-        if (hex.length < 6) return false;
-        const r = parseInt(hex.substring(0, 2), 16);
-        const g = parseInt(hex.substring(2, 4), 16);
-        const b = parseInt(hex.substring(4, 6), 16);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance > 0.5;
-    })();
-
-    const inputClasses = isPrimaryColorLight
-        ? "w-full px-4 py-3 bg-black/10 border border-black/20 rounded-md focus:ring-black/50 focus:border-black/50 placeholder-black/60 text-black"
-        : "w-full px-4 py-3 bg-white/20 border border-white/30 rounded-md focus:ring-white focus:border-white placeholder-white/70 text-white";
+export const ContactSection: React.FC<SectionProps> = ({ section, content, onContentChange, basePath, safePrimaryTextColor, onImageChange }) => {
+    
+    const inputClasses = "w-full px-4 py-3 bg-white/20 border border-white/30 rounded-md focus:ring-white focus:border-white placeholder-white/70 text-white";
 
     return (
-     <Section id={section.type} style={{ backgroundColor: 'var(--primary-color)', color: primaryContrastColor }}>
-        <div className="container mx-auto px-4 text-center">
-            <Editable as="h2" path={`${basePath}.title`} onContentChange={onContentChange} className="text-3xl font-bold mb-4">{content.title}</Editable>
-            <Editable as="p" path={`${basePath}.text`} onContentChange={onContentChange} className="text-lg mb-8 max-w-2xl mx-auto">{content.text}</Editable>
-            <div className="max-w-xl mx-auto">
-                <form data-supabase="leads" data-business-id="{{BUSINESS_ID}}" className="space-y-4">
-                    <input type="text" name="name" placeholder="Tu Nombre" required className={inputClasses}/>
-                    <input type="email" name="email" placeholder="Tu Email" required className={inputClasses}/>
-                    <textarea name="message" placeholder="Tu Mensaje" rows={4} className={inputClasses}></textarea>
-                    <button type="submit" className="w-full px-8 py-3 bg-white font-bold rounded-md hover:bg-gray-200 transition-colors" style={{ color: safePrimaryTextColor }}>Enviar Mensaje</button>
-                </form>
+     <Section id={section.type} style={{ backgroundColor: 'var(--primary-color)', color: 'var(--primary-contrast-color)' }}>
+        <div className="container mx-auto px-4">
+            <div className="text-center">
+                <Editable as="h2" path={`${basePath}.title`} onContentChange={onContentChange} className="text-3xl font-bold mb-4">{content.title}</Editable>
+                <Editable as="p" path={`${basePath}.text`} onContentChange={onContentChange} className="text-lg mb-8 max-w-2xl mx-auto">{content.text}</Editable>
+            </div>
+            <div className="grid md:grid-cols-2 gap-12 items-center max-w-4xl mx-auto">
+                 <div className="max-w-xl mx-auto">
+                    <form data-supabase="leads" data-business-id="{{BUSINESS_ID}}" className="space-y-4">
+                        <input type="text" name="name" placeholder="Tu Nombre" required className={inputClasses}/>
+                        <input type="email" name="email" placeholder="Tu Email" required className={inputClasses}/>
+                        <textarea name="message" placeholder="Tu Mensaje" rows={4} className={inputClasses}></textarea>
+                        <button type="submit" className="w-full px-8 py-3 bg-white font-bold rounded-md hover:bg-gray-200 transition-colors" style={{ color: safePrimaryTextColor }}>Enviar Mensaje</button>
+                    </form>
+                </div>
+                {content.imageUrl && (
+                    <div className="hidden md:block">
+                        <EditableImage 
+                            path={`${basePath}.imageUrl`} 
+                            onImageChange={onImageChange} 
+                            src={content.imageUrl} 
+                            alt="Contact" 
+                            className="rounded-lg shadow-2xl w-full h-full object-cover"
+                        />
+                    </div>
+                )}
             </div>
         </div>
     </Section>

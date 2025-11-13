@@ -18,13 +18,15 @@ const generateWebsiteContent = async (info: BusinessInfo): Promise<WebsiteData> 
       The business is a "${info.type}" called "${info.name}" in "${info.location}".
       Generate all content in the following language: "${info.language}".
       The JSON output MUST conform to the responseSchema. Do not add extra fields.
-      - Create a complete website structure with the following sections in this order: 'header', 'hero', 'about', 'services', 'testimonials', 'gallery', 'contact', and 'footer'.
+      - Create a complete website structure with the following sections in this exact order: 'header', 'hero', 'about', 'services', 'gallery', 'testimonials', 'contact', and 'footer'.
       - For the 'header' section: provide a list of navLinks (e.g., Home, About, Services, Contact) and a ctaButton with text.
       - Write persuasive, high-converting copy for all text fields.
-      - For all 'imageUrl' or 'logoUrl' fields, provide a realistic and high-quality image URL from Unsplash or Pexels. Use specific keywords related to the business type and location. Example: https://images.pexels.com/photos/12345/example.jpg.
-      - For 'services' items, include a title, a short description, and a realistic price.
-      - For 'gallery', provide at least 4 image URLs.
+      - For the 'about' section, write a compelling story about the business's origin, mission, and values.
+      - For all 'imageUrl' or 'logoUrl' fields, use placeholder image URLs from \`https://via.placeholder.com/\`. The placeholder should have appropriate dimensions (e.g., 1920x1080 for hero, 150x50 for logo, 800x600 for others) and include the URL-encoded text "Sube tu imagen aquí". For example: "https://via.placeholder.com/1920x1080/CCCCCC/FFFFFF?text=Sube+tu+imagen+aqu%C3%AD".
+      - For 'services' items, include a title, a short description, a realistic price, and a relevant 'imageUrl' for each service using the placeholder rule above.
+      - For 'gallery', provide at least 4 placeholder image URLs.
       - For 'testimonials', create 3 realistic testimonials. Use the 'title' field for the person's name and the 'description' field for their quote.
+      - For 'contact', you can optionally include an 'imageUrl', for example, a placeholder for an image of the business location or a map.
       - For the 'footer', generate a copyright notice in the 'text' field with the current year and business name, and include social media links (e.g., Facebook, Instagram, Twitter) in the 'links' field.
       - For the 'theme': provide a 'primaryColor' (in hex), a complementary 'secondaryColor' (in hex), and a 'fontFamily' from Google Fonts (e.g., 'Inter', 'Poppins', 'Lato').
     `;
@@ -134,8 +136,8 @@ const generateWebsiteContent = async (info: BusinessInfo): Promise<WebsiteData> 
       theme: { primaryColor: "#7c3aed", secondaryColor: "#4c1d95", fontFamily: "Inter" },
       pages: {
         home: [
-          { id: 'header', type: 'header', content: { logoUrl: 'https://picsum.photos/150/50', navLinks: [{name: 'Home', url: '#'}], ctaButton: { text: 'Contact Us', url: '#' } } },
-          { id: 'hero', type: 'hero', content: { title: `Welcome to ${info.name}`, subtitle: 'Error generating content. Please try again.', imageUrl: 'https://picsum.photos/1920/1080' } },
+          { id: 'header', type: 'header', content: { logoUrl: 'https://via.placeholder.com/150x50/CCCCCC/FFFFFF?text=Sube+tu+imagen+aqu%C3%AD', navLinks: [{name: 'Home', url: '#'}], ctaButton: { text: 'Contact Us', url: '#' } } },
+          { id: 'hero', type: 'hero', content: { title: `Welcome to ${info.name}`, subtitle: 'Error generating content. Please try again.', imageUrl: 'https://via.placeholder.com/1920x1080/CCCCCC/FFFFFF?text=Sube+tu+imagen+aqu%C3%AD' } },
           { id: 'contact', type: 'contact', content: { title: 'Contact Us', text: 'We hit a snag. Please provide your details below.' } }
         ]
       }

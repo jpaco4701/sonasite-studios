@@ -1,3 +1,4 @@
+
 import React, { useState, useCallback } from 'react';
 import { WebsiteData, BusinessInfo, WebsiteSection } from '../types';
 import { EditorPanel } from './EditorPanel';
@@ -5,6 +6,7 @@ import { WebsitePreview } from './WebsitePreview';
 import { CrmView } from './CrmView';
 import { InvoicingView } from './InvoicingView';
 import { MarketingView } from './MarketingView';
+import { DomainView } from './DomainView';
 
 // Utility to set nested state immutably
 const set = (obj: any, path: string, value: any) => {
@@ -24,13 +26,33 @@ const set = (obj: any, path: string, value: any) => {
 export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInfo: BusinessInfo }> = ({ initialWebsiteData, businessInfo }) => {
     const [websiteData, setWebsiteData] = useState<WebsiteData>(initialWebsiteData);
     const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-    const [currentView, setCurrentView] = useState<'editor' | 'dashboard'>('editor');
-    const [dashboardTab, setDashboardTab] = useState<'crm' | 'invoicing' | 'marketing'>('crm');
+    const [currentView, setCurrentView] = useState<'editor' | 'panel-de-control'>('editor');
+    const [dashboardTab, setDashboardTab] = useState<'crm' | 'invoicing' | 'marketing' | 'domain'>('crm');
     const [isPanelOpen, setIsPanelOpen] = useState(true);
 
     const handleContentChange = useCallback((path: string, value: any) => {
         setWebsiteData(prevData => set(prevData, path, value));
     }, []);
+
+    const handleMoveSection = useCallback((sectionIndex: number, direction: 'up' | 'down') => {
+        const newSections = [...websiteData.pages.home];
+        const targetIndex = direction === 'up' ? sectionIndex - 1 : sectionIndex + 1;
+
+        // Ensure we don't move header/footer or go out of bounds
+        if (targetIndex <= 0 || targetIndex >= newSections.length - 1) {
+            return;
+        }
+        
+        [newSections[sectionIndex], newSections[targetIndex]] = [newSections[targetIndex], newSections[sectionIndex]];
+        
+        setWebsiteData(prev => ({
+            ...prev,
+            pages: {
+                ...prev.pages,
+                home: newSections
+            }
+        }));
+    }, [websiteData.pages.home]);
 
     const handleAddSection = useCallback((type: WebsiteSection['type']) => {
         const newSection: WebsiteSection = {
@@ -43,14 +65,25 @@ export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInf
                 images: type === 'gallery' ? ['https://picsum.photos/800/600'] : [],
             }
         };
+
+        const homeSections = [...websiteData.pages.home];
+        const footerIndex = homeSections.findIndex(sec => sec.type === 'footer');
+        const insertIndex = footerIndex !== -1 ? footerIndex : homeSections.length;
+
+        const newHomeSections = [
+            ...homeSections.slice(0, insertIndex),
+            newSection,
+            ...homeSections.slice(insertIndex)
+        ];
+
         setWebsiteData(prev => ({
             ...prev,
             pages: {
                 ...prev.pages,
-                home: [...prev.pages.home, newSection]
+                home: newHomeSections
             }
         }));
-    }, []);
+    }, [websiteData.pages.home]);
 
     const handleDeleteSection = useCallback((sectionId: string) => {
         setWebsiteData(prev => ({
@@ -99,6 +132,7 @@ export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInf
             case 'crm': return <CrmView />;
             case 'invoicing': return <InvoicingView />;
             case 'marketing': return <MarketingView businessInfo={businessInfo}/>;
+            case 'domain': return <DomainView />;
             default: return <CrmView />;
         }
     };
@@ -110,7 +144,7 @@ export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInf
                     <h1 className="text-xl font-bold text-gray-800 dark:text-white">{websiteData.businessName}</h1>
                     <div className="flex items-center gap-4">
                        <button onClick={() => setCurrentView('editor')} className={`px-4 py-2 text-sm font-medium rounded-md ${currentView === 'editor' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700'}`}>Editor</button>
-                       <button onClick={() => setCurrentView('dashboard')} className={`px-4 py-2 text-sm font-medium rounded-md ${currentView === 'dashboard' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700'}`}>Dashboard</button>
+                       <button onClick={() => setCurrentView('panel-de-control')} className={`px-4 py-2 text-sm font-medium rounded-md ${currentView === 'panel-de-control' ? 'bg-primary text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-dark-700'}`}>Panel de control</button>
                     </div>
                 </div>
             </header>
@@ -123,6 +157,7 @@ export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInf
                                 websiteData={websiteData}
                                 onAddSection={handleAddSection}
                                 onDeleteSection={handleDeleteSection}
+                                onMoveSection={handleMoveSection}
                                 selectedSectionId={selectedSectionId}
                                 setSelectedSectionId={setSelectedSectionId}
                                 onTogglePanel={() => setIsPanelOpen(false)}
@@ -150,6 +185,7 @@ export const EditorView: React.FC<{ initialWebsiteData: WebsiteData, businessInf
                                     <button onClick={() => setDashboardTab('crm')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${dashboardTab === 'crm' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>CRM</button>
                                     <button onClick={() => setDashboardTab('invoicing')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${dashboardTab === 'invoicing' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Facturación</button>
                                     <button onClick={() => setDashboardTab('marketing')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${dashboardTab === 'marketing' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Marketing</button>
+                                    <button onClick={() => setDashboardTab('domain')} className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${dashboardTab === 'domain' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>Dominio</button>
                                 </nav>
                             </div>
                             {renderDashboardContent()}

@@ -1,11 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CrmContact } from '../types';
-
-const sampleContacts: CrmContact[] = [
-    { id: 1, name: 'Elena Rodriguez', email: 'elena.r@example.com', status: 'Customer', lastContacted: '2024-07-15' },
-    { id: 2, name: 'Carlos Gomez', email: 'carlos.g@example.com', status: 'Lead', lastContacted: '2024-07-20' },
-    { id: 3, name: 'Sofia Fernandez', email: 'sofia.f@example.com', status: 'Contacted', lastContacted: '2024-07-18' },
-];
+import { supabaseService } from '../services/supabaseService';
+import { LoadingSpinner } from './icons';
 
 const StatusBadge: React.FC<{ status: CrmContact['status'] }> = ({ status }) => {
     const colorMap = {
@@ -62,16 +58,36 @@ const AddContactModal: React.FC<{ onClose: () => void; onAddContact: (contact: O
 
 
 export const CrmView: React.FC = () => {
-    const [contacts, setContacts] = useState<CrmContact[]>(sampleContacts);
+    const [contacts, setContacts] = useState<CrmContact[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const handleAddContact = (newContact: Omit<CrmContact, 'id' | 'lastContacted'>) => {
-        const newEntry: CrmContact = {
+    useEffect(() => {
+        const fetchContacts = async () => {
+            setIsLoading(true);
+            const { data, error } = await supabaseService.getContacts();
+            if (error) {
+                setError(error);
+            } else {
+                setContacts(data || []);
+            }
+            setIsLoading(false);
+        };
+        fetchContacts();
+    }, []);
+
+    const handleAddContact = async (newContact: Omit<CrmContact, 'id' | 'created_at' | 'lastContacted'>) => {
+        const contactToSave: Omit<CrmContact, 'id' | 'created_at'> = {
             ...newContact,
-            id: contacts.length + 1,
             lastContacted: new Date().toISOString().split('T')[0],
         };
-        setContacts([...contacts, newEntry]);
+        const { data, error } = await supabaseService.addContact(contactToSave);
+        if (error) {
+            setError(error);
+        } else if (data) {
+            setContacts(prev => [...prev, data]);
+        }
     };
     
     return (
@@ -83,7 +99,7 @@ export const CrmView: React.FC = () => {
                      <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 text-sm font-medium rounded-md text-white bg-primary hover:bg-blue-700">Añadir Contacto</button>
                 </div>
             </div>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Esta tabla está lista para ser conectada a una base de datos de Supabase.</p>
+             {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-dark-700">
                     <thead className="bg-gray-50 dark:bg-dark-800">
@@ -96,7 +112,9 @@ export const CrmView: React.FC = () => {
                         </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-dark-900 divide-y divide-gray-200 dark:divide-dark-700">
-                        {contacts.map(contact => (
+                        {isLoading ? (
+                             <tr><td colSpan={5} className="text-center py-8"><LoadingSpinner className="w-8 h-8 mx-auto text-primary" /></td></tr>
+                        ) : contacts.map(contact => (
                             <tr key={contact.id}>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">{contact.name}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">{contact.email}</td>
